@@ -1,0 +1,174 @@
+﻿@{
+    ViewBag.Title = "Chat";
+}
+
+<script src="~/Scripts/jquery-3.3.1.js"></script>
+<script src="~/Scripts/jquery.signalR-2.4.3.min.js"></script>
+<style>
+
+    #chat {
+        background-color: oldlace;
+        height: 500px;
+        overflow-y: auto;
+    }
+
+    
+
+    .name, .senderName {
+        padding-top: 20px;
+    }
+
+    .message {
+        padding: 10px;
+        border-radius: 15px;
+        border-bottom-left-radius: 0px;
+        background-color: lightgrey;
+    }
+
+    .senderMessage {
+        padding: 10px;
+        border-radius: 15px;
+        border-bottom-right-radius: 0px;
+        background-color: midnightblue;
+        color: lightgrey;
+    }
+
+    img {
+        height: 20px;
+    }
+</style>
+<div class="container-lg">
+
+    <h2>Chat</h2>
+    <div class="container-lg" id="chat"></div>
+    <div class="container-lg">
+        @{
+            if (ViewBag.Flag)
+            {
+                <input type="hidden" id="displayName" value="@ViewBag.Message" />
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="input-group input-group-lg">
+                            <input type="text" class="myinput form-control input" id="message" placeholder="Write a message">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default btn" type="submit" id="send">Send</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="input-group input-group-lg">
+                            <input type="text" class="myinput form-control input" id="message" placeholder="Please register or log in to send messages" disabled>
+                            <span class="input-group-btn">
+                                <button class="btn btn-default btn" type="submit" id="send" disabled>Send</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+    @section scripts{
+        <script src="~/Scripts/jquery.signalR-2.4.3.min.js"></script>
+
+        <script src="~/signalr/hubs"></script>
+
+        <script>
+            $(function () {
+                var isSender = false;
+                var chat = $.connection.myHub;
+
+                chat.client.addNewMessage = function (name, message) {
+                    if (name == $('#displayName').val()) {
+                        isSender = true;
+                        $('#chat').append(
+                                `<div class="container-fluid">
+                                    <div class="row">
+                                        <div class="senderName text-left col-xs-8 col-xs-offset-4">` + htmlEncode(name) +`</div>
+                                    </div>
+                                </div>
+                                <div class="container-fluid">
+                                    <div class="row">
+                                        <div class="senderMessage text-left col-xs-8 col-xs-offset-4">` + htmlEncode(message)+`</div>
+                                    </div>
+                                </div>`);
+                    }
+                    else {
+                        isSender = false;
+                        $('#chat').append(
+                                `<div class="container-fluid">
+                                    <div class="row">
+                                        <div class="name text-left col-xs-8">` + htmlEncode(name) + `</div>
+                                    </div>
+                                </div>
+                                <div class="container-fluid">
+                                    <div class="row">
+                                        <div class="message text-left col-xs-8">` + htmlEncode(message) + `</div>
+                                    </div>
+                                </div>`);
+                    }
+                };
+
+                $('#message').focus();
+
+
+                $("#message").keyup(function (event) {
+                        if (event.keyCode == 13) {
+                        $("#send").focus().click();
+                        }
+                    });
+
+
+
+                chat.client.markSpam = function () {
+                    if (isSender) {
+                        $('#chat').append(
+                            `<div class="container-fluid">
+                                <div class="row">
+                                    <img class="spam col-xs-offset-4" title="This message was recognised as spam\nClick to learn more" src="/Content/Images/spamWarning.png" alt="SpamWarning"/>
+                                </div>
+                            </div>`);
+                    }
+                    else {
+                        $('#chat').append(
+                            `<div class="container-fluid">
+                                <div class="row">
+                                    <img class="spam" title="This message was recognised as spam\nClick to learn more" src="/Content/Images/spamWarning.png" alt="SpamWarning"/>
+                                </div>
+                            </div>`);
+                    }
+
+                    $('.spam').on('click', function () {
+                        var url = '@Url.Action("About", "Home")';
+                        window.open(url);
+                    });
+                };
+
+
+                $.connection.hub.start().done(function () {
+                    $('#send').click(function () {
+                            if ($('#message').val().length > 0) {
+                                chat.server.send($('#displayName').val(), $('#message').val());
+                            $('#message').val('').focus();
+                            }
+                        else
+                        {
+                            $('#message').focus();
+                            }
+                        })
+                })
+            })
+
+            function htmlEncode(value) {
+                var encodedValue = $('<div />').text(value).html();
+                return encodedValue;
+            }
+        </script>
+}
+

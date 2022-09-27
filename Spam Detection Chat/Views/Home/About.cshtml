@@ -1,0 +1,19 @@
+﻿@{
+    ViewBag.Title = "About";
+}
+
+<style>
+
+    #warning {
+        height: 20px;
+    }
+</style>
+
+<h2>@ViewBag.Title.</h2>
+
+<p>This chat sends all messages to an Azure ML API that checks whether they are spam or not.</p>
+<p>They are checked using this model:</p>
+<div class="row">
+    <img class="col-sm-8" src="~/Content/Images/spamDetectionModel.png" />
+</div>
+<p><br>A spam message is denoted by this symbol: <img id="warning" src="/Content/Images/spamWarning.png" /></p>
